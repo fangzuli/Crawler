@@ -1,0 +1,15 @@
+dazhongdianping:
+  shop_id: H56LNgUexWqEnWvW # 店铺id，根据链接店铺链接可确定
+  base_url: https://www.dianping.com/shop/{}/review_all/p{}?queryType=isPic&queryVal=true
+  page_start: 1 # 评论的起始页
+  page_end: 5 # 评论的终止页
+  save_dir: result # 爬取结果保存的地址
+  crawl_delay: 1 # 网页爬取的中间间隔
+  download_delay: 0.1 # 图片下载的间隔
+  set_logfile: True # 是否保存log文件
+  headers:  # 需要更新到header的信息
+    Cookie: XXXXXXXX # 替换成自己的cookie
+    Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
+    Accept-Encodin: gzip, deflate, br, zstd
+    Accept-Language: zh,zh-CN;q=0.9,en;q=0.8
+
