@@ -18,7 +18,12 @@ class Crawl:
         return response
     
     def urlopen(self, url):
-        response = urllib.request.urlopen(url)
+        try:
+            response = urllib.request.urlopen(url)
+        except urllib.error.HTTPError as e:
+            logger.error("{}: {}".format(e, url.full_url))
+            logger.error("cookie可能已失效，请更新cookie后重试！")
+            raise Exception(e)
         return response
 
     def write_txt(self, path, content):
