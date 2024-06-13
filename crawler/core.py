@@ -4,6 +4,7 @@ import gzip
 import os
 import time
 import logging
+import random
 from bs4 import BeautifulSoup
 from crawler.utils.yaml_utils import load_yaml
 
@@ -12,7 +13,15 @@ logger = logging.getLogger(__name__)
 
 
 class Crawl:
-    def request(self, url, data=None, headers=None, method="GET"):
+    def request(self, url, proxy_list, data=None, headers=None, method="GET"):
+        # IP代理
+        if len(proxy_list) > 0:
+            # 随机从IP列表中选择一个IP
+            proxy = random.choice(proxy_list)
+            # 基于选择的IP构建连接
+            handle = urllib.request.ProxyHandler({proxy[0]: proxy[1]})
+            opener = urllib.request.build_opener(handle)
+            urllib.request.install_opener(opener=opener)
         request = urllib.request.Request(url=url, data=data, headers=headers, method=method)
         response = self.urlopen(request)
         return response
@@ -47,7 +56,22 @@ class application():
         # 爬取相关的参数
         self.crawl_delay = float(self.config["crawl_delay"])
         self.download_delay = float(self.config["download_delay"])
-        
+        self.user_agent = [
+            "Mozilla/5.0 (Windows NT 6.3; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/39.0.2171.95 Safari/537.36",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/35.0.1916.153 Safari/537.36",
+            "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:30.0) Gecko/20100101 Firefox/30.0",
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2) AppleWebKit/537.75.14 (KHTML, like Gecko) Version/7.0.3 Safari/537.75.14",
+            "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Win64; x64; Trident/6.0)",
+            'Mozilla/5.0 (Windows; U; Windows NT 5.1; it; rv:1.8.1.11) Gecko/20071127 Firefox/2.0.0.11',
+            'Opera/9.25 (Windows NT 5.1; U; en)',
+            'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.1.4322; .NET CLR 2.0.50727)',
+            'Mozilla/5.0 (compatible; Konqueror/3.5; Linux) KHTML/3.5.5 (like Gecko) (Kubuntu)',
+            'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.0.12) Gecko/20070731 Ubuntu/dapper-security Firefox/1.5.0.12',
+            'Lynx/2.8.5rel.1 libwww-FM/2.14 SSL-MM/1.4.1 GNUTLS/1.2.9',
+            "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Ubuntu/11.04 Chromium/16.0.912.77 Chrome/16.0.912.77 Safari/535.7",
+            "Mozilla/5.0 (X11; Ubuntu; Linux i686; rv:10.0) Gecko/20100101 Firefox/10.0",
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+        ]
         self.headers = {
         "Accept":"text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
         "Accept-Encoding":"gzip, deflate, br, zstd",
@@ -70,6 +94,14 @@ class application():
         format_str = logging.Formatter(fmt)#设置日志格式
         hander.setFormatter(format_str)
         logger.addHandler(hander)
+        # proxy
+        if self.config["use_proxy"]:
+            self.proxy_list = [_.split("|") for _ in self.config["proxy"]]
+        else:
+            self.proxy_list = []
+        # 打印基本参数
+        logger.info("header: {}".format(self.headers))
+        logger.info("proxy: {}".format(self.proxy_list))
 
     def get_urls(self):
         return [self.base_url]
@@ -85,7 +117,8 @@ class application():
     def crawl(self):
         # 下载html
         for i, url in enumerate(self.urls):
-            resp = self.crawler.request(url=url, headers=self.headers)
+            self.headers["User-Agent"] = random.choice(self.user_agent)
+            resp = self.crawler.request(url=url, proxy_list=self.proxy_list, headers=self.headers)
             if resp.code == 200:
                 print(f">>> 链接{url}成功响应!")
                 logger.info(f">>> 链接{url}成功响应!")

@@ -12,4 +12,8 @@ dazhongdianping:
     Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7
     Accept-Encodin: gzip, deflate, br, zstd
     Accept-Language: zh,zh-CN;q=0.9,en;q=0.8
-
+  use_proxy: True # 若不使用IP代理，置为False
+  proxy: 
+  - http|120.194.4.157:5443 # 可去在右边网站获取 https://cn.proxy-tools.com/proxy/cn
+  - http|43.154.96.33:80
+  - http|218.75.102.198:8000
