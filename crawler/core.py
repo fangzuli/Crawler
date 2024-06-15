@@ -4,6 +4,7 @@ import gzip
 import os
 import re
 import time
+import requests
 import logging
 import random
 from bs4 import BeautifulSoup
@@ -101,6 +102,8 @@ class application():
             self.proxy_list = [_.split("|") for _ in self.config["proxy"]]
         else:
             self.proxy_list = []
+        # 可用IP代理过滤
+        self.filter_proxy()
         # 打印基本参数
         logger.info("header: {}".format(self.headers))
         logger.info("proxy: {}".format(self.proxy_list))
@@ -122,10 +125,34 @@ class application():
             logger.info("网页未登录账号，请更新Cookie后重试！")
             raise Exception("网页未登录账号，请更新Cookie后重试！")
     
+    def proxy_is_availabel(self, proxy):
+        try:
+            # 设置重连次数
+            requests.adapters.DEFAULT_RETRIES = 3
+            proxy_dict = {proxy[0]:proxy[1]}
+            res = requests.get(url="http://icanhazip.com/", timeout=2, proxies=proxy_dict)
+            if res.text.strip() == proxy[1].split(":")[0]:
+                return True
+            else:
+                logger.info(f"IP代理{proxy[0]}://{proxy[1]}无效！")
+                print(f"IP代理{proxy[0]}://{proxy[1]}无效！")
+                return False
+        except:
+            logger.info(f"IP代理{proxy[0]}://{proxy[1]}无效！")
+            print(f"IP代理{proxy[0]}://{proxy[1]}无效！")
+            return False
+        
+    def filter_proxy(self):
+        """检查IP代理池是否可用"""
+        self.proxy_list = [_ for _ in self.proxy_list if self.proxy_is_availabel(_)]
+
     def crawl(self):
         # 下载html
         for i, url in enumerate(self.urls):
             self.headers["User-Agent"] = random.choice(self.user_agent)
+            # check ip proxy
+            self.filter_proxy()
+            # 链接网址
             resp = self.crawler.request(url=url, proxy_list=self.proxy_list, headers=self.headers)
             if resp.code == 200:
                 print(f">>> 链接{url}成功响应!")
@@ -149,12 +176,12 @@ class application():
             pic_dir = os.path.join(dir_path, f"comment-pic")
             if not os.path.exists(pic_dir):
                 os.makedirs(pic_dir, exist_ok=True)
-            self.download_pic(html, pic_dir, page_num)
+            self.download_pic(html, pic_dir, page_num, self.proxy_list)
             time.sleep(self.crawl_delay)
         print(f">>> 所有图片已完成下载，请查看:\n{pic_dir}")
         logger.info(f">>> 所有图片已完成下载，请查看:\n{pic_dir}")
 
-    def download_pic(self, html, pic_dir, page_num):
+    def download_pic(self, html, pic_dir, page_num, proxy_list):
         bs = BeautifulSoup(html, "html.parser")
         def is_img_and_has_data_big(tag):
             return tag.has_attr("data-big")
@@ -169,4 +196,12 @@ class application():
             time.sleep(self.download_delay)
             logger.info("正在下载: {}".format(img_link))
             saveimg = os.path.join(pic_dir, f"p{page_num}_{i}{os.path.splitext(img_link)[-1]}")
+            # IP代理
+            if len(proxy_list) > 0:
+                # 随机从IP列表中选择一个IP
+                proxy = random.choice(proxy_list)
+                # 基于选择的IP构建连接
+                handle = urllib.request.ProxyHandler({proxy[0]: proxy[1]})
+                opener = urllib.request.build_opener(handle)
+                urllib.request.install_opener(opener=opener)
             urllib.request.urlretrieve(img_link, saveimg) # 下载链接内容

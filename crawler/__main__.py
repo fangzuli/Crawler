@@ -17,9 +17,9 @@ class DaZhongDianPing(application):
 
 def main():
     # 爬取评论图片
-    print("*****请不定期更新Cookie和IP代理！！！*****")
-    print("*****请不定期更新Cookie和IP代理！！！*****")
-    print("*****请不定期更新Cookie和IP代理！！！*****")
+    print("*****请注意更新Cookie和IP代理！！！*****")
+    print("*****请注意期更新Cookie和IP代理！！！*****")
+    print("*****请注意期更新Cookie和IP代理！！！*****")
     dianping = DaZhongDianPing(config_file="config/config.yaml", application="dazhongdianping")
     dianping.crawl()
 
