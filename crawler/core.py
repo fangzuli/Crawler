@@ -2,6 +2,7 @@ import urllib
 import urllib.request
 import gzip
 import os
+import re
 import time
 import logging
 import random
@@ -18,6 +19,7 @@ class Crawl:
         if len(proxy_list) > 0:
             # 随机从IP列表中选择一个IP
             proxy = random.choice(proxy_list)
+            logger.info("IP代理:{}".format(proxy))
             # 基于选择的IP构建连接
             handle = urllib.request.ProxyHandler({proxy[0]: proxy[1]})
             opener = urllib.request.build_opener(handle)
@@ -114,6 +116,12 @@ class application():
             raise Exception("店铺名称为空！")
         return shop_name
     
+    def check_login(self, html):
+        """检查网页是否登录"""
+        if re.search("登录失败", html):
+            logger.info("网页未登录账号，请更新Cookie后重试！")
+            raise Exception("网页未登录账号，请更新Cookie后重试！")
+    
     def crawl(self):
         # 下载html
         for i, url in enumerate(self.urls):
@@ -128,6 +136,7 @@ class application():
             html = resp.read()
             html = gzip.decompress(html).decode("utf-8")
             # 保存html
+            self.check_login(html)
             shop_name = self.get_title(html)
             dir_path = os.path.join(self.save_dir, f"{shop_name}")
             if not os.path.exists(dir_path):
